@@ -43,7 +43,7 @@ public class GoodServiceImpl implements GoodService {
         return repository.findById(id)
                 .map(good -> {
                     good.setId(newGood.getId());
-                    good.setName(newGood.getName());
+                    good.setTitle(newGood.getTitle());
                     good.setSize(newGood.getSize());
                     good.setPrice(newGood.getPrice());
                     good.setAmount(newGood.getAmount());

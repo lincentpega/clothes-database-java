@@ -1,17 +1,16 @@
 package com.yumyaskova.clothesstoredatabaseapp.controller;
 
 import com.yumyaskova.clothesstoredatabaseapp.enumeration.SizeEnum;
-import com.yumyaskova.clothesstoredatabaseapp.exceptions.GoodNotFoundException;
+import com.yumyaskova.clothesstoredatabaseapp.exception.GoodNotFoundException;
 import com.yumyaskova.clothesstoredatabaseapp.model.Good;
-import com.yumyaskova.clothesstoredatabaseapp.repository.GoodRepository;
 import com.yumyaskova.clothesstoredatabaseapp.service.GoodService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@CrossOrigin
 @RestController
 @RequestMapping("/api/goods")
 public class GoodController {
@@ -31,6 +30,9 @@ public class GoodController {
     @GetMapping("/")
     public ResponseEntity<List<Good>> getAllGoodsBySize(@RequestParam(name = "size") SizeEnum size) {
         List<Good> goods = goodService.findAllBySize(size);
+        if (goods.size() == 0) {
+            throw new GoodNotFoundException("Not found goods with size " + size.getValue());
+        }
         return new ResponseEntity<>(goods, HttpStatus.OK);
     }
 

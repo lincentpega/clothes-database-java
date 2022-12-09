@@ -1,6 +1,6 @@
 package com.yumyaskova.clothesstoredatabaseapp.controller;
 
-import com.yumyaskova.clothesstoredatabaseapp.exceptions.GoodNotFoundException;
+import com.yumyaskova.clothesstoredatabaseapp.exception.GoodNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
