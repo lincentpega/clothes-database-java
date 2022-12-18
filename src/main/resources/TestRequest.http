@@ -1,1 +1,39 @@
+### Get good by size
+GET localhost:8080/api/goods/?size=M
+
+### Get good by id
 GET localhost:8080/api/goods/10
+
+### Get all goods
+GET localhost:8080/api/goods/all
+
+### Add good
+POST localhost:8080/api/goods/
+Content-Type: application/json
+
+{
+  "id": 100,
+  "title": "Test",
+  "size": "S",
+  "amount": 1,
+  "price": 1.0,
+  "isSupplyRequired": 1,
+  "isDeleted": 0
+}
+
+###
+DELETE localhost:8080/api/goods/1
+
+###
+PUT localhost:8080/api/goods/9
+Content-Type: application/json
+
+{
+  "id": 10,
+  "title": "Test2",
+  "size": "M",
+  "amount": 1,
+  "price": 2.0,
+  "isSupplyRequired": 1,
+  "isDeleted": 0
+}

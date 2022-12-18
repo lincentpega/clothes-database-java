@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -29,7 +30,7 @@ public class GoodRepository {
     public List<Good> findAll() {
         try (FileReader fileReader = new FileReader(dbURI)) {
             CSVReader csvReader = new CSVReader(fileReader);
-            return csvReader.readAll().stream().map(Good::of).toList();
+            return csvReader.readAll().stream().map(Good::of).filter(good -> !good.isDeleted()).toList();
         } catch (IOException | CsvException e) {
             throw new RuntimeException(e);
         }
@@ -40,8 +41,13 @@ public class GoodRepository {
         if (row.isPresent()) {
             try (FileReader fileReader = new FileReader(dbURI)) {
                 CSVReader csvReader = new CSVReader(fileReader);
-                csvReader.skip(row.get());
-                return Optional.of(Good.of(csvReader.readNext()));
+                csvReader.skip(row.get() - 1);
+                Good good = Good.of(csvReader.readNext());
+                if (!good.isDeleted()) {
+                    return Optional.of(good);
+                } else {
+                    return Optional.empty();
+                }
             } catch (IOException | CsvException e) {
                 throw new RuntimeException(e);
             }
@@ -65,7 +71,10 @@ public class GoodRepository {
             int previousRow = 0;
             for (Integer row : rows) {
                 csvReader.skip(row - previousRow - 1);
-                goods.add(Good.of(csvReader.readNext()));
+                Good good = Good.of(csvReader.readNext());
+                if (!good.isDeleted()) {
+                    goods.add(good);
+                }
                 previousRow = row;
             }
         } catch (IOException | CsvValidationException e) {
@@ -75,10 +84,56 @@ public class GoodRepository {
     }
 
     public Good save(Good good) {
-        throw new UnsupportedOperationException();
+        try (RandomAccessFile randomAccessFile = new RandomAccessFile(dbURI, "rw")) {
+            if (hashService.isGoodAlreadyExists(good.getId())) {
+                update(good);
+            } else {
+                if (good.getId() > hashService.getLastId() + 1) {
+                    good.setId(hashService.getLastId() + 1);
+                }
+                randomAccessFile.seek(hashService.getLastByteForInserting());
+                randomAccessFile.readLine();
+                randomAccessFile.writeBytes(good.toCSVString() + "\n");
+
+                hashService.refreshMapsOnInsert(good.getId(), good.toCSVString().getBytes().length, good.getSize());
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return findById(good.getId()).orElseThrow(RuntimeException::new);
     }
 
-    public void deleteById(long id) {
-        throw new UnsupportedOperationException();
+    private void update(Good good) {
+        int previousPassengerBytes = good.getId() == 1 ? 0 : hashService.getBytesById(good.getId() - 1);
+
+        try (RandomAccessFile randomAccessFile = new RandomAccessFile(dbURI, "rw")) {
+
+            randomAccessFile.seek(previousPassengerBytes);
+            randomAccessFile.readLine();
+
+            int targetBytes = hashService.getBytesById(good.getId()) - previousPassengerBytes;
+            int currentBytes = good.toCSVString().getBytes().length;
+
+            if (targetBytes == currentBytes) {
+                randomAccessFile.writeBytes(good.toCSVString() + "\n");
+            }
+
+            hashService.fillIdBytesHashmap();
+            hashService.setSizeById(good.getId(), good.getSize());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void deleteById(Long id) { // works only if first id is 1
+        int passengerBytes = hashService.getBytesById(id);
+
+        try (RandomAccessFile randomAccessFile = new RandomAccessFile(dbURI, "rw")) {
+            randomAccessFile.seek(passengerBytes - 2);
+            randomAccessFile.writeBytes("1");
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@CrossOrigin
 @RestController
 @RequestMapping("/api/goods")
 public class GoodController {
@@ -55,8 +54,7 @@ public class GoodController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteGood(@PathVariable long id) {
+    public void deleteGood(@PathVariable long id) {
         goodService.deleteById(id);
-        return ResponseEntity.noContent().build();
     }
 }

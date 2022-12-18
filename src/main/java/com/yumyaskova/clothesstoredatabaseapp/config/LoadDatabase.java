@@ -13,7 +13,7 @@ public class LoadDatabase {
     @Bean
     CommandLineRunner initDatabase(HashService hashService) {
         return args -> {
-            hashService.rehashDB();
+            hashService.refreshDB();
             log.info("DB initialized");
         };
     }
